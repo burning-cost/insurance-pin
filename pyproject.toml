@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "insurance-pin"
+version = "0.1.0"
+description = "Tree-like Pairwise Interaction Networks for insurance pricing — neural GA2M with shared-weight architecture"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Burning Cost", email = "pricing.frontier@gmail.com" },
+]
+keywords = ["insurance", "pricing", "neural-networks", "interpretable-ml", "ga2m", "pairwise-interactions", "actuarial"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+    "polars>=0.20.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/burning-cost/insurance-pin"
+Repository = "https://github.com/burning-cost/insurance-pin"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/insurance_pin"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
