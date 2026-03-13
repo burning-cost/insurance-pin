@@ -213,6 +213,23 @@ multiplicative relativities, which is the natural language of insurance rating.
 - `gamma` — Gamma deviance (severity modelling)
 - `tweedie` — Tweedie deviance, 1 < p < 2 (pure premium)
 
+## Performance
+
+Benchmarked on French MTPL (freMTPL2freq, 610k policies, out-of-sample Poisson deviance x10^-2). Results from Richman, Scognamiglio & Wüthrich (arXiv:2508.15678, 2025):
+
+| Model | Deviance (x10^-2) | Parameters |
+|-------|-------------------|------------|
+| Null model | 25.445 | — |
+| Poisson GLM | 24.102 | — |
+| Poisson GAM | 23.956 | — |
+| Ensemble FNN | 23.783 | — |
+| Ensemble CAFFT | 23.726 | 27,133 |
+| Ensemble Credibility TRM | 23.711 | 1,746 |
+| **Ensemble PIN** | **23.667** | **4,147** |
+
+PIN is the best published result on this benchmark. It achieves this with 4,147 parameters — fewer than the CAFFT model — because the shared interaction network reuses weights across all pairs rather than training a separate network per pair. The improvement over GLM is 0.435 units of deviance; at portfolio scale this translates to meaningfully better risk discrimination and pricing accuracy.
+
+
 ## License
 
 MIT
