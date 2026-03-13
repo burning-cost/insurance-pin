@@ -162,6 +162,9 @@ class PINModel(nn.Module):
         loss_kwargs = {"p": tweedie_p} if loss == "tweedie" else {}
         self._loss_fn = get_loss(loss, **loss_kwargs)
 
+        # Weight initialisation: smaller scales for numerical stability
+        self._init_weights()
+
         # Training state
         self._is_fitted = False
         self.train_history: Dict[str, List[float]] = {"train_loss": [], "val_loss": []}
@@ -170,6 +173,26 @@ class PINModel(nn.Module):
         # h_{jk}^centered(x) = h_{jk}(x) - mean_train[h_{jk}]
         # We store mean_train[w_{jk} * h_{jk}] per pair for efficiency
         self._pair_means: Optional[torch.Tensor] = None
+
+    # ------------------------------------------------------------------
+    # Weight initialisation
+    # ------------------------------------------------------------------
+
+    def _init_weights(self) -> None:
+        """
+        Initialise all linear layers to smaller scales for training stability.
+
+        Default PyTorch Kaiming init can produce large initial activations
+        when many layers are composed. With smaller scales, early training
+        is more stable even on very small datasets.
+        """
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.normal_(module.weight, mean=0.0, std=0.01)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.Embedding):
+                nn.init.normal_(module.weight, mean=0.0, std=0.01)
 
     # ------------------------------------------------------------------
     # Forward pass
@@ -416,6 +439,8 @@ class PINModel(nn.Module):
                 mu = self.forward(x_batch)
                 loss = self._loss_fn(mu, y_batch, exp_batch)
                 loss.backward()
+                # Gradient clipping prevents exploding gradients in early training
+                torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                 optimizer.step()
 
                 epoch_loss += loss.item()
