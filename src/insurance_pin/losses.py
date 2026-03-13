@@ -59,7 +59,7 @@ class PoissonDeviance(nn.Module):
             y * torch.log(y / mu),
             torch.zeros_like(y),
         )
-        bracket = mu - y - log_term
+        bracket = mu - y + log_term
         return 2.0 * (exposure * bracket).mean()
 
 

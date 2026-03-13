@@ -3,9 +3,6 @@ Tests for PINDiagnostics.
 """
 import pytest
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")  # Non-interactive backend
-import matplotlib.pyplot as plt
 
 from insurance_pin.model import PINModel
 from insurance_pin.diagnostics import PINDiagnostics
@@ -16,6 +13,14 @@ FEATURES = {
     "bm": "continuous",
     "area": 4,
 }
+
+
+def _setup_matplotlib():
+    """Set non-interactive backend before any matplotlib use."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    return plt
 
 
 def _make_data(n=200, seed=1):
@@ -60,39 +65,45 @@ def background_data():
 
 class TestPINDiagnostics:
     def test_interaction_heatmap_returns_fig_ax(self, diag):
+        plt = _setup_matplotlib()
         fig, ax = diag.interaction_heatmap()
         assert fig is not None
         assert ax is not None
         plt.close(fig)
 
     def test_interaction_heatmap_matrix_size(self, diag):
+        plt = _setup_matplotlib()
         fig, ax = diag.interaction_heatmap()
-        # Check that the image has correct dimensions
         images = ax.get_images()
         assert len(images) > 0
         plt.close(fig)
 
     def test_weighted_importance_returns_importance_dict(self, diag, background_data):
+        plt = _setup_matplotlib()
         fig, ax, importance = diag.weighted_importance(background_data)
         assert isinstance(importance, dict)
         assert len(importance) > 0
         plt.close(fig)
 
     def test_weighted_importance_positive_values(self, diag, background_data):
+        plt = _setup_matplotlib()
         _, _, importance = diag.weighted_importance(background_data)
         for label, val in importance.items():
             assert val >= 0.0, f"{label}: {val}"
 
     def test_weighted_importance_top_n(self, diag, background_data):
+        plt = _setup_matplotlib()
         _, _, importance = diag.weighted_importance(background_data, top_n=2)
         assert len(importance) == 2
 
     def test_plot_main_effect_continuous(self, diag, background_data):
+        plt = _setup_matplotlib()
         fig, ax = diag.plot_main_effect("age", background_data)
         assert fig is not None
         plt.close(fig)
 
     def test_plot_main_effect_categorical(self, diag, background_data):
+        plt = _setup_matplotlib()
         fig, ax = diag.plot_main_effect("area", background_data)
         assert fig is not None
         plt.close(fig)
@@ -102,19 +113,22 @@ class TestPINDiagnostics:
             diag.plot_main_effect("nonexistent_feature", background_data)
 
     def test_plot_surface_continuous_pair(self, diag, background_data):
+        plt = _setup_matplotlib()
         fig, ax = diag.plot_surface("age", "bm", background_data, n_grid=10)
         assert fig is not None
         plt.close(fig)
 
     def test_plot_surface_categorical_pair(self, diag, background_data):
+        plt = _setup_matplotlib()
         fig, ax = diag.plot_surface("age", "area", background_data, n_grid=10)
         assert fig is not None
         plt.close(fig)
 
     def test_plot_training_history(self, diag):
+        plt = _setup_matplotlib()
         fig, ax = diag.plot_training_history()
         lines = ax.get_lines()
-        assert len(lines) == 2  # train + val
+        assert len(lines) == 2
         plt.close(fig)
 
     def test_summary_contains_feature_names(self, diag):
@@ -131,6 +145,7 @@ class TestPINDiagnostics:
         assert "poisson" in txt.lower()
 
     def test_existing_axes_accepted(self, diag):
+        plt = _setup_matplotlib()
         fig, ax = plt.subplots()
         fig2, ax2 = diag.interaction_heatmap(ax=ax)
         assert ax2 is ax

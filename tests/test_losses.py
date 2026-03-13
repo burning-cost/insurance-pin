@@ -87,8 +87,8 @@ class TestPoissonDeviance:
         mu = torch.tensor([2.0])
         y = torch.tensor([1.5])
         v = torch.tensor([1.0])
-        # 2 * v * (mu - y - y*log(mu/y))
-        expected = 2 * 1.0 * (2.0 - 1.5 - 1.5 * np.log(2.0 / 1.5))
+        # Standard Poisson deviance: 2 * v * (y*log(y/mu) - y + mu)
+        expected = 2 * 1.0 * (1.5 * np.log(1.5 / 2.0) - 1.5 + 2.0)
         out = loss(mu, y, v)
         assert abs(out.item() - expected) < 1e-5
 

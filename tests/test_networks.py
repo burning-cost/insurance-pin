@@ -256,8 +256,9 @@ class TestSharedInteractionNet:
         """Reference config: d=10, d0=10, d1=30, d2=20."""
         net = SharedInteractionNet(embedding_dim=10, token_dim=10, layer1_dim=30, layer2_dim=20)
         n_params = sum(p.numel() for p in net.parameters())
-        # Layer sizes: (30, 20+10) + (20, 30) + (1, 20)
-        expected = (30 * 20 + 30) + (20 * 30 + 20) + (1 * 20 + 1)
+        # Input dim = 2*d + d0 = 2*10 + 10 = 30
+        # Layer1: 30*30+30=930, Layer2: 20*30+20=620, Layer3: 1*20+1=21
+        expected = (30 * 30 + 30) + (20 * 30 + 20) + (1 * 20 + 1)
         assert n_params == expected, f"Expected {expected}, got {n_params}"
 
 

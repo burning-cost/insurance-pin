@@ -4,6 +4,9 @@ PINDiagnostics: visualisation and inspection for fitted PIN models.
 The methods here are intended for interactive use in notebooks and for
 producing figures for pricing documentation. They wrap the surface/effect
 computation on PINModel into plots you'd actually show a pricing team.
+
+Matplotlib is imported lazily (on first use) to avoid import-time failures
+in environments where matplotlib is not installed or has version conflicts.
 """
 
 from __future__ import annotations
@@ -11,8 +14,12 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+
+
+def _get_plt():
+    """Lazy matplotlib.pyplot import."""
+    import matplotlib.pyplot as plt
+    return plt
 
 
 class PINDiagnostics:
@@ -24,7 +31,6 @@ class PINDiagnostics:
     """
 
     def __init__(self, model) -> None:
-        # Avoid circular import — accept any object with the right interface
         self.model = model
 
     def interaction_heatmap(
@@ -54,6 +60,7 @@ class PINDiagnostics:
         Returns:
             (fig, ax) tuple.
         """
+        plt = _get_plt()
         weights = self.model.interaction_weights()
         feature_names = self.model.feature_names
         q = len(feature_names)
@@ -80,7 +87,6 @@ class PINDiagnostics:
         ax.set_yticklabels(feature_names)
         ax.set_title(title)
 
-        # Annotate with values
         for i in range(q):
             for j in range(q):
                 ax.text(
@@ -114,15 +120,14 @@ class PINDiagnostics:
         Returns:
             (fig, ax, importance_dict).
         """
+        plt = _get_plt()
         contribs = self.model.pair_contributions(X_background)
-        feature_names = self.model.feature_names
 
         importance = {}
         for (fname_j, fname_k), vals in contribs.items():
             label = f"{fname_j}" if fname_j == fname_k else f"{fname_j} x {fname_k}"
             importance[label] = float(vals.max() - vals.min())
 
-        # Sort descending
         sorted_items = sorted(importance.items(), key=lambda x: x[1], reverse=True)
         if top_n is not None:
             sorted_items = sorted_items[:top_n]
@@ -135,7 +140,6 @@ class PINDiagnostics:
         else:
             fig = ax.get_figure()
 
-        # Colour: main effects vs interactions
         colors = [
             "#2196F3" if " x " not in label else "#FF5722"
             for label in labels
@@ -175,6 +179,7 @@ class PINDiagnostics:
         Returns:
             (fig, ax) tuple.
         """
+        plt = _get_plt()
         effects = self.model.main_effects(X_background, n_grid=n_grid)
 
         if feature not in effects:
@@ -233,6 +238,7 @@ class PINDiagnostics:
         Returns:
             (fig, ax) tuple.
         """
+        plt = _get_plt()
         surfaces = self.model.interaction_surfaces(
             X_background,
             n_grid=n_grid,
@@ -241,7 +247,6 @@ class PINDiagnostics:
 
         key = (feature_j, feature_k)
         if key not in surfaces:
-            # Try reversed
             key = (feature_k, feature_j)
 
         if key not in surfaces:
@@ -267,7 +272,6 @@ class PINDiagnostics:
         spec_k = self.model.features[feature_k]
 
         if isinstance(spec_k, int):
-            # Categorical on k-axis: line plot per category
             for cat_idx in range(grid_k.shape[0]):
                 ax.plot(
                     grid_j,
@@ -277,7 +281,7 @@ class PINDiagnostics:
                 )
             ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=8)
             ax.set_xlabel(feature_j)
-            ax.set_ylabel(f"w * h (interaction)")
+            ax.set_ylabel("w * h (interaction)")
         else:
             im = ax.pcolormesh(
                 grid_j, grid_k, surface.T,
@@ -307,6 +311,7 @@ class PINDiagnostics:
         Returns:
             (fig, ax) tuple.
         """
+        plt = _get_plt()
         history = self.model.train_history
 
         if ax is None:

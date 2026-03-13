@@ -241,6 +241,8 @@ class PINModel(nn.Module):
             Predicted frequency, shape (batch,).
         """
         eta = self._compute_linear_predictor(x_dict)
+        # Clamp to avoid exp overflow (GLM link stabilisation)
+        eta = torch.clamp(eta, min=-20.0, max=20.0)
         mu = torch.exp(eta)
         if exposure is not None:
             mu = mu * exposure
