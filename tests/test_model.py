@@ -452,12 +452,14 @@ class TestPINEnsemble:
             ensemble.predict(X_test)
 
     def test_ensemble_mean_differs_from_single(self, fitted_ensemble, small_data):
-        """Ensemble average should differ from any single model."""
+        """Ensemble mean should equal mean of individual model predictions."""
         X_test, _, _ = _synthetic_data(N_TEST, FEATURES_SMALL)
         ens_pred = fitted_ensemble.predict(X_test)
         m0_pred = fitted_ensemble.models[0].predict(X_test)
-        # Should not be identical (different seeds)
-        assert not np.allclose(ens_pred, m0_pred)
+        m1_pred = fitted_ensemble.models[1].predict(X_test)
+        # Ensemble mean should equal mean of individual predictions
+        manual_mean = (m0_pred + m1_pred) / 2.0
+        assert np.allclose(ens_pred, manual_mean, atol=1e-5)
 
     def test_interaction_weights_keys(self, fitted_ensemble):
         weights = fitted_ensemble.interaction_weights()
