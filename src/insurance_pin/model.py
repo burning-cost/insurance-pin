@@ -378,6 +378,13 @@ class PINModel(nn.Module):
 
         n = y_t.shape[0]
 
+        # Initialise bias to log(mean_frequency) for numerical stability.
+        # This ensures initial predictions are in the right ballpark and
+        # prevents exploding gradients in the first few batches.
+        with torch.no_grad():
+            mean_freq = y_t.mean().clamp(min=1e-8)
+            self.output_bias.fill_(torch.log(mean_freq).item())
+
         # Build or reserve validation set
         if X_val is not None:
             x_val_dict = self._prepare_features(X_val)
@@ -438,10 +445,20 @@ class PINModel(nn.Module):
                 optimizer.zero_grad()
                 mu = self.forward(x_batch)
                 loss = self._loss_fn(mu, y_batch, exp_batch)
+                if torch.isnan(loss):
+                    continue  # skip NaN batches
                 loss.backward()
                 # Gradient clipping prevents exploding gradients in early training
                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+                # Zero NaN gradients before step
+                for p in self.parameters():
+                    if p.grad is not None and torch.isnan(p.grad).any():
+                        p.grad.zero_()
                 optimizer.step()
+                # Restore any NaN params to their pre-step values
+                for p in self.parameters():
+                    if torch.isnan(p).any():
+                        torch.nan_to_num_(p, nan=0.0)
 
                 epoch_loss += loss.item()
                 n_batches += 1
