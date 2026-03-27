@@ -1,3 +1,5 @@
+⚠️ **This package has been merged into [`insurance-gam`](https://github.com/burning-cost/insurance-gam).** This repository is archived. Install `insurance-gam` instead.
+
 # insurance-pin
 
 **Tree-like Pairwise Interaction Networks for insurance pricing.**
